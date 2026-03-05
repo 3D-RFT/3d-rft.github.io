@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Reinforcement Fine-Tuning for Video-based 3D scene understanding.">
+  <meta name="keywords" content="3D Scene Understanding">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3D-RFT: Reinforcement Fine-Tuning for Video-based 3D Scene Understanding</title>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/logo.png">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+        "three": "https://unpkg.com/three@0.127.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.127.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://siyuanhuang.com/">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+            <a class="navbar-item" href="https://scenecot.github.io/">
+            SceneCOT
+          </a>
+          <a class="navbar-item" href="https://msr3d.github.io/">
+            MSR3D
+          </a>
+          <a class="navbar-item" href="https://beacon-3d.github.io/">
+            Beacon3D
+          </a>
+          <a class="navbar-item" href="https://embodied-generalist.github.io/">
+            LEO
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<style>
+  .scene {
+    font-family: "Times New Roman", serif;
+    font-weight: bold;
+    font-size: 36px;
+    text-transform: uppercase;
+  }
+
+  .hero .hero-body {
+    padding-bottom: 0.8rem; 
+  }
+
+    .hero .hero-body {
+    padding-top: 0.8rem; 
+  }
+
+  .section {
+    padding: 1.8rem 1.8rem; 
+  }
+
+  .cot {
+    font-family: "Times New Roman", serif;
+    font-weight: normal;
+    font-size: 36px;
+    text-transform: uppercase;
+  }
+
+  .training-dynamics-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .training-dynamics-block {
+    margin: 1rem auto 0;
+    padding: 1.25rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 10px 26px rgba(17, 24, 39, 0.07);
+  }
+
+  .training-dynamics-panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+.training-dynamics-page {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(24px) scale(0.985);
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease, visibility 0ms linear 320ms;
+    padding: 0.5rem 0.5rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 1;
+    will-change: transform;
+  }
+
+.training-dynamics-page.is-active {
+    position: relative;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) scale(1);
+    transition: transform 460ms cubic-bezier(0.2, 0.9, 0.25, 1.08), opacity 320ms ease;
+    z-index: 3;
+  }
+
+  .training-dynamics-page.is-before {
+    transform: translateX(-24px) scale(0.985);
+    z-index: 2;
+  }
+
+  .training-dynamics-page.is-after {
+    transform: translateX(24px) scale(0.985);
+    z-index: 2;
+  }
+
+  body[data-td-transition="crossfade"] .training-dynamics-page {
+    transform: none;
+    transition: opacity 260ms ease, visibility 0ms linear 260ms;
+  }
+  body[data-td-transition="crossfade"] .training-dynamics-page.is-active,
+  body[data-td-transition="crossfade"] .training-dynamics-page.is-before,
+  body[data-td-transition="crossfade"] .training-dynamics-page.is-after {
+    transform: none;
+  }
+
+  body[data-td-transition="lift"] .training-dynamics-page {
+    transform: translateY(16px) scale(0.985);
+    transition: transform 360ms cubic-bezier(0.2, 0.9, 0.25, 1.08), opacity 280ms ease, visibility 0ms linear 280ms;
+  }
+  body[data-td-transition="lift"] .training-dynamics-page.is-before,
+  body[data-td-transition="lift"] .training-dynamics-page.is-after {
+    transform: translateY(16px) scale(0.985);
+  }
+
+  body[data-td-transition="zoom"] .training-dynamics-page {
+    transform: scale(0.94);
+    transition: transform 340ms cubic-bezier(0.2, 0.9, 0.25, 1.08), opacity 280ms ease, visibility 0ms linear 280ms;
+  }
+  body[data-td-transition="zoom"] .training-dynamics-page.is-before,
+  body[data-td-transition="zoom"] .training-dynamics-page.is-after {
+    transform: scale(0.94);
+  }
+
+  body[data-td-transition="ios"] .training-dynamics-page {
+    opacity: 1;
+    transform: translate3d(100%, 0, 0);
+    transition: transform 400ms cubic-bezier(0.22, 0.61, 0.36, 1), visibility 0ms linear 400ms;
+    backface-visibility: hidden;
+  }
+  body[data-td-transition="ios"] .training-dynamics-page.is-active {
+    transform: translate3d(0, 0, 0);
+    transition: transform 400ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  body[data-td-transition="ios"] .training-dynamics-page.is-before {
+    visibility: visible;
+    opacity: 1;
+    transform: translate3d(-100%, 0, 0);
+  }
+  body[data-td-transition="ios"] .training-dynamics-page.is-after {
+    visibility: visible;
+    opacity: 1;
+    transform: translate3d(100%, 0, 0);
+  }
+
+  .training-dynamics-page p {
+    text-align: left;
+    line-height: 1.55;
+    margin-bottom: 0.95rem;
+  }
+
+  .training-dynamics-page img {
+    border-radius: 8px;
+  }
+
+  .training-dynamics-nav {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 1px solid transparent;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4a4a4a;
+    font-size: 0.95rem;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+  }
+
+  .training-dynamics-nav:hover {
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+    background-color: #f8fafc;
+  }
+
+  .training-dynamics-switches .button {
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  }
+
+  .training-dynamics-switches .button.is-light {
+    background: #eef2f7;
+    color: #374151;
+  }
+
+  .training-dynamics-switches .button.is-dark {
+    background: #1f2937;
+    color: #f8fafc;
+    box-shadow: 0 7px 16px rgba(17, 24, 39, 0.24);
+  }
+
+  .td-damping {
+    animation: tdDamping 280ms cubic-bezier(0.2, 0.75, 0.2, 1);
+  }
+
+  @keyframes tdDamping {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.88); }
+    65% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .training-dynamics-switches {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  @media screen and (max-width: 768px) {
+    .training-dynamics-wrapper {
+      gap: 0.5rem;
+    }
+
+    .training-dynamics-block {
+      padding: 0.8rem;
+    }
+
+    .training-dynamics-nav {
+      width: 2.35rem;
+      height: 2.35rem;
+    }
+  }
+</style>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <div class="has-text-centered mb-5">
+            <img src="./static/images/logo.png" 
+                 alt="SceneCOT Logo"
+                 style="height: 10rem; margin-bottom: 1rem;">
+          
+            <h1 class="title is-1 publication-title">
+              3D-RFT: Reinforcement Fine-Tuning for Video-based 3D Scene Understanding
+            </h1>
+          </div>
+          
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://xiongkunlinghu.github.io/" rel="external nofollow noopener" target="_blank">Xiongkun Linghu</a><sup>1*</sup>,</span>
+            <span class="author-block">
+              <a href="https://huangjy-pku.github.io/" rel="external nofollow noopener" target="_blank">Jiangyong Huang</a><sup>1,2*</sup>,
+            </span>
+              <a href="https://buzz-beater.github.io/" rel="external nofollow noopener" target="_blank">Baoxiong Jia</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://siyuanhuang.com/" rel="external nofollow noopener" target="_blank">Siyuan Huang</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Beijing Institute for General Artificial Intelligence,</span>
+            <span class="author-block"><sup>2</sup>Peking University</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2510.16714" target="_blank"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/SceneCOT/scenecot" target="_blank"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/SceneCOT/scenecot" target="_blank"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/SceneCOT/scenecot" target="_blank"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-check"></i>
+                  </span>
+                  <span>Checkpoint</span>
+                </a>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Reinforcement Learning with Verifiable Rewards (RLVR) has emerged as a transformative paradigm for enhancing the reasoning capabilities of Large Language Models (LLMs), yet its potential in 3D scene understanding remains underexplored. Existing approaches largely rely on Supervised Fine-Tuning (SFT), where the token-level cross-entropy loss acts as an indirect proxy for optimization, leading to a misalignment between training objectives and task performances.
+          </p>
+          <p>
+            To bridge this gap, we present Reinforcement Fine-Tuning for Video-based 3D Scene Understanding (3D-RFT), the first framework to extend RLVR to video-based 3D perception and reasoning. 3D-RFT shifts the paradigm by directly optimizing the model towards evaluation metrics. 3D-RFT first activates 3D-aware Multimodal Large Language Models (MLLLMs) via SFT, followed by reinforcement fine-tuning using Group Relative Policy Optimization (GRPO) with strictly verifiable reward functions. We design task-specific reward functions directly from metrics like 3D IoU and F1-Score to provide more effective signals to guide model training.
+          </p>
+          <p>
+            Extensive experiments demonstrate that 3D-RFT-4B achieves state-of-the-art performance on various video-based 3D scene understanding tasks. Notably, 3D-RFT-4B significantly outperforms larger models (<i>e.g.</i>, VG LLM-8B) on 3D video detection, 3D visual grounding, and spatial reasoning benchmarks. We further reveal good properties of 3D-RFT such as robust efficacy, and valuable insights into training strategies and data impact. We hope 3D-RFT can serve as a robust and promising paradigm for future development of 3D scene understanding.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Conceptual Comparison</h2>
+    
+        <div class="content has-text-justified training-dynamics-block">
+          <img src="./static/images/Teaser_v4_crop.jpg" 
+           alt="Comparison between SFT and 3D-RFT training paradigms." 
+           style="display: block; margin: 0 auto 2rem auto; width: 75%; height: auto;">
+          <p>
+            <strong>Comparison between SFT and 3D-RFT training paradigms.</strong> Left: Standard Supervised Fine-Tuning (SFT) relies on a per-token Cross-Entropy loss which acts as an indirect proxy, leading to a gap between training objectives and final evaluation metrics. Middle: Identical output formats for 3D Video Detection, Grounding, and Spatial Reasoning tasks. Right: 3D-RFT utilizes a Scalar Reward (Policy Gradient) derived directly from evaluation metrics (e.g., F1-Score, 3D IoU, and Accuracy) through a decoding and parsing module, ensuring the model directly optimizes for the final task performance.
+          </p>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">3D-RFT Training Framework</h2>
+    
+        <div class="content has-text-justified training-dynamics-block">
+          <img src="./static/images/Model_Framework_v4_crop.jpg" 
+           alt="3D-RFT training framework overview" 
+           style="display: block; margin: 0 auto 2rem auto; width: 75%; height: auto;">
+          <p>
+            The process consists of two main stages: (1) <strong>SFT Warm Up</strong>: Initial training of the 3D-aware VLM using SFT data to establish a baseline policy. (2) <strong>RL Training</strong>: The Policy Model generates completions for video-based problems. A Verifiable Reward is calculated based on Format Reward (adherence to structured output) and Task Reward (performance in 3D Video Detection, 3D Visual Grounding, and Spatial Reasoning using metrics like 3D IoU and F1 Score). The model is optimized via Policy Gradient while maintaining a KL Divergence constraint relative to the frozen Reference Model.
+          </p>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Evaluation Results on 3D Perception</h2>
+        <div class="content has-text-justified training-dynamics-block">
+          <div class="training-dynamics-wrapper">
+          <button class="training-dynamics-nav" type="button" data-td-nav="prev" aria-label="Previous page">&#9664;</button>
+            <div class="training-dynamics-panel">
+              <div class="training-dynamics-page is-active" data-td-page="0">
+                <p>
+                  <strong>Quantitative results on ScanNetDetection.</strong> In this table, we present the comparison with baseline models and report the performance improvement between the SFT baseline (VG LLM-4B) and 3D-RFT-4B (ours).
+                </p>
+                <img src="./static/images/3D_Video_Detection_Result.png"
+                     alt="Results on 3D video detection"
+                     style="display: block; margin: 0 auto; width: 100%; height: auto;">
+              </div>
+              <div class="training-dynamics-page" data-td-page="1">
+                <p>
+                  <strong>Quantitative results on ScanRefer.</strong> The content in “()” indicates results with proposal refinement.
+                </p>
+                <img src="./static/images/3D_Visual_Grounding_Result.png"
+                     alt="Results on 3D visual grounding"
+                     style="display: block; margin: 0 auto; width: 60%; height: auto;">
+              </div>
+            </div>
+          <button class="training-dynamics-nav" type="button" data-td-nav="next" aria-label="Next page">&#9654;</button>
+          </div>
+          <div class="training-dynamics-switches">
+            <button class="button is-small is-dark" type="button" data-td-switch="0">3D Video Detection</button>
+            <button class="button is-small is-light" type="button" data-td-switch="1">3D Visual Grounding</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Evaluation Results on 3D Spatial Reasoning</h2>
+        <div class="content has-text-justified training-dynamics-block">
+          <div class="training-dynamics-wrapper">
+          <button class="training-dynamics-nav" type="button" data-td-nav="prev" aria-label="Previous page">&#9664;</button>
+            <div class="training-dynamics-panel">
+              <div class="training-dynamics-page is-active" data-td-page="0">
+                <p>
+                  <strong>Quantitative results on VSI-Bench.</strong> We include zero-shot results of base models, and test results of models after SFT and RFT.
+                </p>
+                <img src="./static/images/3D_Spatial_Reasoning_Result.png"
+                     alt="Results on 3D spatial reasoning"
+                     style="display: block; margin: 0 auto; width: 100%; height: auto;">
+              </div>
+              <div class="training-dynamics-page" data-td-page="1">
+                <p>
+                  <strong>3D-RFT consistently improves spatial reasoning performance.</strong> As shown in Fig. 3, we present evaluation results regarding two SFT checkpoints, and compare their performances between “before” and “after” RFT. The results demonstrate that RFT yields consistent improvements on VSI-Bench, especially on TA test. Moreover, RFT on TA task elicits improvements on DA task. In addition, we observe that continually training with SFT yields a moderateperformance drop, which suggests the advantage of RFT.
+                </p>
+                <img src="./static/images/3D_Spatial_Reasoning_Ablation.png"
+                     alt="Results on 3D spatial reasoning"
+                     style="display: block; margin: 0 auto; width: 30%; height: auto;">
+              </div>
+            </div>
+          <button class="training-dynamics-nav" type="button" data-td-nav="next" aria-label="Next page">&#9654;</button>
+          </div>
+          <div class="training-dynamics-switches">
+            <button class="button is-small is-dark" type="button" data-td-switch="0">Main Results</button>
+            <button class="button is-small is-light" type="button" data-td-switch="1">Ablation Study on COT Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Training Dynamics</h2>
+        <div class="content has-text-justified training-dynamics-block">
+          <div class="training-dynamics-wrapper">
+          <button class="training-dynamics-nav" type="button" data-td-nav="prev" aria-label="Previous page">&#9664;</button>
+            <div class="training-dynamics-panel">
+              <div class="training-dynamics-page is-active" data-td-page="0">
+                <p>
+                  <strong>3D Video Detection.</strong> Fig. 6 illustrates the training dynamics of 3D-RFT on 3D video detection. The consistent rise in both Evaluation F1 Score (a) and F1 Reward (b) confirms that RFT effectively optimizes perception. Analyzing the reward components reveals a strategic shift: while the global F1 Reward (b) steadily increases, the IoU Reward (c) peaks early and then slightly declines. This indicates the policy transitions from initial <i>geometric refinement</i> (tightening boxes) to <i>recall maximization</i> (reducing false negatives). In the latter phase, the dense IoU Reward serves as a critical regulator, while the sparser F1 Reward optimizes the global balance between precision and recall. Moreover, the continuous improvement at the end implies that RLVR is a stable and effective paradigm for 3D perception tasks.
+                </p>
+                <img src="./static/images/Training_Dynamics_Detection.png"
+                     alt="Training dynamics on 3D video detection"
+                     style="display: block; margin: 0 auto; width: 60%; height: auto;">
+              </div>
+              <div class="training-dynamics-page" data-td-page="1">
+                <p>
+                  <strong>3D Spatial Reasoning.</strong> Fig. 7 illustrates the training dynamics of 3D-RFT on the spatial reasoning task. Despite minor fluctuations, both evaluation accuracy and training rewards exhibit upward trends, confirming RFT's efficacy. Notably, the curves show a sign of saturation after 4000 steps. We attribute this to the nature of the optimization landscape: unlike perception tasks where RFT continuously refines continuous geometric coordinates, the reasoning task features a discrete text space with coarser feedback. This leads to the earlier saturation than 3D perception tasks, and potentially limits the granularity of improvement over SFT.
+                </p>
+                <img src="./static/images/Training_Dynamics_Reasoning.png"
+                     alt="Training dynamics on 3D spatial reasoning"
+                     style="display: block; margin: 0 auto; width: 60%; height: auto;">
+              </div>
+            </div>
+          <button class="training-dynamics-nav" type="button" data-td-nav="next" aria-label="Next page">&#9654;</button>
+          </div>
+          <div class="training-dynamics-switches">
+            <button class="button is-small is-dark" type="button" data-td-switch="0">3D Video Detection</button>
+            <button class="button is-small is-light" type="button" data-td-switch="1">3D Spatial Reasoning</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            This means you are free to borrow the <a
+              href="https://github.com/nerfies/nerfies.github.io">source code</a> of this website,
+            we just ask that you link back to this page in the footer.
+            Please remember to remove the analytics code included in the header of the website which
+            you do not want on your website.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      // Single config entry: change only this value to switch style.
+      // Supported: 'ios' | 'slide' | 'crossfade' | 'lift' | 'zoom'
+      const TD_TRANSITION = 'ios';
+      document.body.setAttribute('data-td-transition', TD_TRANSITION);
+
+      const trainingDynamicsBlocks = document.querySelectorAll('.training-dynamics-block');
+      trainingDynamicsBlocks.forEach((trainingDynamicsBlock) => {
+          const pages = trainingDynamicsBlock.querySelectorAll('[data-td-page]');
+          const switchButtons = trainingDynamicsBlock.querySelectorAll('[data-td-switch]');
+          const prevButton = trainingDynamicsBlock.querySelector('[data-td-nav="prev"]');
+          const nextButton = trainingDynamicsBlock.querySelector('[data-td-nav="next"]');
+          const panel = trainingDynamicsBlock.querySelector('.training-dynamics-panel');
+          let currentPage = 0;
+
+          function lockPanelHeight() {
+              if (!panel || !pages.length) return;
+              let maxHeight = 0;
+              pages.forEach((page) => {
+                  const prevDisplay = page.style.display;
+                  const prevVisibility = page.style.visibility;
+                  const prevPosition = page.style.position;
+                  const prevWidth = page.style.width;
+
+                  page.style.display = 'block';
+                  page.style.visibility = 'hidden';
+                  page.style.position = 'absolute';
+                  page.style.width = '100%';
+                  maxHeight = Math.max(maxHeight, page.offsetHeight);
+
+                  page.style.display = prevDisplay;
+                  page.style.visibility = prevVisibility;
+                  page.style.position = prevPosition;
+                  page.style.width = prevWidth;
+              });
+              panel.style.minHeight = `${maxHeight}px`;
+          }
+
+          function bindImageHeightSync() {
+              const images = trainingDynamicsBlock.querySelectorAll('img');
+              images.forEach((image) => {
+                  if (image.complete) return;
+                  image.addEventListener('load', lockPanelHeight, { once: true });
+              });
+          }
+
+          function renderTrainingDynamicsPage(index, directionHint = 0) {
+              if (!pages.length) return;
+              const nextPage = (index + pages.length) % pages.length;
+              const prevPage = currentPage;
+              if (nextPage === prevPage) return;
+              
+              // Define direction exactly from the hints or target indices.
+              let direction = directionHint;
+              if (direction === 0) {
+                  direction = nextPage > prevPage ? 1 : -1;
+              }
+
+              // Standard UX: Next (direction > 0) slides active page to Left (is-before) and incoming starts at Right (is-after).
+              const outgoingClass = direction > 0 ? 'is-before' : 'is-after';
+              const incomingClass = direction > 0 ? 'is-after' : 'is-before';
+
+              const prevEl = pages[prevPage];
+              const nextEl = pages[nextPage];
+
+              // 1. Disable transition for incoming & unrelated pages so they can teleport cleanly without ghosting
+              pages.forEach((page, i) => {
+                  if (i !== prevPage) {
+                      page.style.transition = 'none';
+                  }
+              });
+
+              // 2. Remove all positioning classes except from the currently active page
+              pages.forEach((page, i) => {
+                  if (i !== prevPage) {
+                      page.classList.remove('is-active', 'is-before', 'is-after');
+                  }
+              });
+
+              // 3. Place unrelated pages securely off-screen on the incoming side
+              pages.forEach((page, i) => {
+                  if (i !== prevPage && i !== nextPage) {
+                      page.classList.add(direction > 0 ? 'is-after' : 'is-before');
+                  }
+              });
+
+              // 4. Snap incoming page to its exact starting point
+              nextEl.classList.add(incomingClass);
+
+              // 5. Force browser reflow to apply the non-transitioned changes synchronously
+              void nextEl.offsetWidth;
+
+              // 6. Restore transitions globally
+              pages.forEach((page) => {
+                  page.style.transition = '';
+              });
+
+              // 7. Apply the classes that trigger standard CSS animations
+              prevEl.classList.remove('is-active');
+              prevEl.classList.add(outgoingClass);
+
+              nextEl.classList.remove(incomingClass);
+              nextEl.classList.add('is-active');
+
+              currentPage = nextPage;
+              switchButtons.forEach((button, i) => {
+                  button.classList.toggle('is-dark', i === currentPage);
+                  button.classList.toggle('is-light', i !== currentPage);
+              });
+          }
+
+          function attachDamping(button) {
+              if (!button) return;
+              button.addEventListener('click', () => {
+                  button.classList.remove('td-damping');
+                  void button.offsetWidth;
+                  button.classList.add('td-damping');
+              });
+              button.addEventListener('animationend', () => {
+                  button.classList.remove('td-damping');
+              });
+          }
+
+          if (prevButton) {
+              attachDamping(prevButton);
+              prevButton.addEventListener('click', () => renderTrainingDynamicsPage(currentPage - 1, -1));
+          }
+          if (nextButton) {
+              attachDamping(nextButton);
+              nextButton.addEventListener('click', () => renderTrainingDynamicsPage(currentPage + 1, 1));
+          }
+          switchButtons.forEach((button) => {
+              attachDamping(button);
+              button.addEventListener('click', () => {
+                  const target = Number(button.dataset.tdSwitch);
+                  renderTrainingDynamicsPage(target, 0);
+              });
+          });
+
+          lockPanelHeight();
+          // Initializing with index 0 explicitly prevents unexpected slide behavior on first load
+          renderTrainingDynamicsPage(0);
+          bindImageHeightSync();
+          setTimeout(lockPanelHeight, 0);
+          window.addEventListener('resize', lockPanelHeight);
+      });
+  });
+</script>
+
+</body>
+
+</html>
