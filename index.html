@@ -298,6 +298,31 @@
     margin-top: 1rem;
   }
 
+  .citation-card {
+    margin-top: 0.75rem;
+    padding: 1.25rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 10px 26px rgba(17, 24, 39, 0.07);
+  }
+
+  .citation-card p {
+    margin-bottom: 0.75rem;
+    text-align: left;
+  }
+
+  .citation-pre {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 10px;
+    background: #f3f4f6;
+    color: #4a4a4a;
+    text-align: left;
+    overflow-x: auto;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
   @media screen and (max-width: 768px) {
     .training-dynamics-wrapper {
       gap: 0.5rem;
@@ -459,7 +484,7 @@
             <div class="training-dynamics-panel">
               <div class="training-dynamics-page is-active" data-td-page="0">
                 <p>
-                  <strong>Quantitative results on ScanNetDetection.</strong> In this table, we present the comparison with baseline models and report the performance improvement between the SFT baseline (VG LLM-4B) and 3D-RFT-4B (ours).
+                  <strong>Quantitative results on ScanNetDetection.</strong> In this table, we present the comparison with baseline models and report the performance improvement between the SFT baseline (VG LLM-4B) and 3D-RFT-4B (ours). The main conclusions: 1) <i>3D-RFT-4B significantly enhances detection performance over the SFT baseline. </i>  2) <i>3D-RFT-4B outperforms the larger VG LLM-8B.</i>
                 </p>
                 <img src="./static/images/3D_Video_Detection_Result.png"
                      alt="Results on 3D video detection"
@@ -467,7 +492,7 @@
               </div>
               <div class="training-dynamics-page" data-td-page="1">
                 <p>
-                  <strong>Quantitative results on ScanRefer.</strong> The content in “()” indicates results with proposal refinement.
+                  <strong>Quantitative results on ScanRefer.</strong> The content in “()” indicates results with proposal refinement. The main conclusions: 1) <i>3D-RFT significantly enhances performance compared to the SFT baseline.</i> 2) <i> 3D-RFT-4B outperforms the larger VG LLM-8B.</i>
                 </p>
                 <img src="./static/images/3D_Visual_Grounding_Result.png"
                      alt="Results on 3D visual grounding"
@@ -494,7 +519,7 @@
             <div class="training-dynamics-panel">
               <div class="training-dynamics-page is-active" data-td-page="0">
                 <p>
-                  <strong>Quantitative results on VSI-Bench.</strong> We include zero-shot results of base models, and test results of models after SFT and RFT.
+                  <strong>Quantitative results on VSI-Bench.</strong> We include zero-shot results of base models, and test results of models after SFT and RFT. <i>3D-RFT consistently improves spatial reasoning performance.</i> Notably, 3D-RFT-4B significantly outperforms some larger models, demonstrating the effectiveness of RFT in optimizing spatial reasoning capabilities.
                 </p>
                 <img src="./static/images/3D_Spatial_Reasoning_Result.png"
                      alt="Results on 3D spatial reasoning"
@@ -529,7 +554,7 @@
             <div class="training-dynamics-panel">
               <div class="training-dynamics-page is-active" data-td-page="0">
                 <p>
-                  <strong>3D Video Detection.</strong> Fig. 6 illustrates the training dynamics of 3D-RFT on 3D video detection. The consistent rise in both Evaluation F1 Score (a) and F1 Reward (b) confirms that RFT effectively optimizes perception. Analyzing the reward components reveals a strategic shift: while the global F1 Reward (b) steadily increases, the IoU Reward (c) peaks early and then slightly declines. This indicates the policy transitions from initial <i>geometric refinement</i> (tightening boxes) to <i>recall maximization</i> (reducing false negatives). In the latter phase, the dense IoU Reward serves as a critical regulator, while the sparser F1 Reward optimizes the global balance between precision and recall. Moreover, the continuous improvement at the end implies that RLVR is a stable and effective paradigm for 3D perception tasks.
+                  <strong>3D Video Detection.</strong> The following figure illustrates the training dynamics of 3D-RFT on 3D video detection. The consistent rise in both Evaluation F1 Score (a) and F1 Reward (b) confirms that RFT effectively optimizes perception. Analyzing the reward components reveals a strategic shift: while the global F1 Reward (b) steadily increases, the IoU Reward (c) peaks early and then slightly declines. This indicates the policy transitions from initial <i>geometric refinement</i> (tightening boxes) to <i>recall maximization</i> (reducing false negatives). In the latter phase, the dense IoU Reward serves as a critical regulator, while the sparser F1 Reward optimizes the global balance between precision and recall. Moreover, the continuous improvement at the end implies that RLVR is a stable and effective paradigm for 3D perception tasks.
                 </p>
                 <img src="./static/images/Training_Dynamics_Detection.png"
                      alt="Training dynamics on 3D video detection"
@@ -537,7 +562,7 @@
               </div>
               <div class="training-dynamics-page" data-td-page="1">
                 <p>
-                  <strong>3D Spatial Reasoning.</strong> Fig. 7 illustrates the training dynamics of 3D-RFT on the spatial reasoning task. Despite minor fluctuations, both evaluation accuracy and training rewards exhibit upward trends, confirming RFT's efficacy. Notably, the curves show a sign of saturation after 4000 steps. We attribute this to the nature of the optimization landscape: unlike perception tasks where RFT continuously refines continuous geometric coordinates, the reasoning task features a discrete text space with coarser feedback. This leads to the earlier saturation than 3D perception tasks, and potentially limits the granularity of improvement over SFT.
+                  <strong>3D Spatial Reasoning.</strong> The following figure illustrates the training dynamics of 3D-RFT on the spatial reasoning task. Despite minor fluctuations, both evaluation accuracy and training rewards exhibit upward trends, confirming RFT's efficacy. Notably, the curves show a sign of saturation after 4000 steps. We attribute this to the nature of the optimization landscape: unlike perception tasks where RFT continuously refines continuous geometric coordinates, the reasoning task features a discrete text space with coarser feedback. This leads to the earlier saturation than 3D perception tasks, and potentially limits the granularity of improvement over SFT.
                 </p>
                 <img src="./static/images/Training_Dynamics_Reasoning.png"
                      alt="Training dynamics on 3D spatial reasoning"
@@ -550,6 +575,21 @@
             <button class="button is-small is-dark" type="button" data-td-switch="0">3D Video Detection</button>
             <button class="button is-small is-light" type="button" data-td-switch="1">3D Spatial Reasoning</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Citation</h2>
+        <div class="content citation-card">
+          <p>If you find our model helpful, feel free to cite it:</p>
+          <pre class="citation-pre"><code>@article{3d-rft,
+  title={3D-RFT: Reinforcement Fine-Tuning for Video-based 3D Scene Understanding},
+  author={Linghu, Xiongkun and Huang, Jiangyong and Jia, Baoxiong and Huang, Siyuan},
+  booktitle={TODO},
+  year={2025}
+}</code></pre>
         </div>
       </div>
     </div>
