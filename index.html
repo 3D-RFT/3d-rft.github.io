@@ -352,6 +352,9 @@
             <h1 class="title is-1 publication-title">
               3D-RFT: Reinforcement Fine-Tuning for Video-based 3D Scene Understanding
             </h1>
+            <div class="is-size-4 publication-venue" style="margin: 0.75rem auto 0; text-align: center; color: #363636;">
+              ICML 2026
+            </div>
           </div>
           
           <div class="is-size-5 publication-authors">
@@ -570,6 +573,40 @@
           <div class="training-dynamics-switches">
             <button class="button is-small is-dark" type="button" data-td-switch="0">3D Video Detection</button>
             <button class="button is-small is-light" type="button" data-td-switch="1">3D Spatial Reasoning</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Analysis on Training Objectives of SFT and RFT</h2>
+        <div class="content has-text-justified training-dynamics-block">
+          <div class="training-dynamics-wrapper">
+          <button class="training-dynamics-nav" type="button" data-td-nav="prev" aria-label="Previous page">&#9664;</button>
+            <div class="training-dynamics-panel">
+              <div class="training-dynamics-page is-active" data-td-page="0">
+                <p>
+                  <strong>Objective landscapes of SFT and RFT.</strong> SFT supervises discrete output tokens with cross-entropy, producing a sharp target signal around the exact ground-truth token sequence. For 3D box prediction, this token-level signal is only an indirect proxy for geometric quality. RFT instead uses the decoded box IoU as a verifiable reward, yielding a smoother metric-aligned landscape where nearby 3D predictions receive meaningful partial credit.
+                </p>
+                <img src="./static/images/3D_RFT_rebuttal_Theory_Analysis.jpeg"
+                     alt="Comparison of SFT supervisory signal and RFT reward signal for 3D box prediction"
+                     style="display: block; margin: 0 auto; width: 72%; height: auto;">
+              </div>
+              <div class="training-dynamics-page" data-td-page="1">
+                <p>
+                  <strong>Prediction distribution shift from SFT to RFT.</strong> The density distribution of 3D IoU shows that RFT shifts predictions toward higher-overlap regions compared with the SFT baseline. This supports the core motivation of 3D-RFT: direct reward optimization encourages geometrically better predictions beyond token imitation.
+                </p>
+                <img src="./static/images/3D_RFT_rebuttal_Prediction_Distribution.png"
+                     alt="Density distribution of 3D IoU comparing SFT predictions and RFT predictions"
+                     style="display: block; margin: 0 auto; width: 72%; height: auto;">
+              </div>
+            </div>
+          <button class="training-dynamics-nav" type="button" data-td-nav="next" aria-label="Next page">&#9654;</button>
+          </div>
+          <div class="training-dynamics-switches">
+            <button class="button is-small is-dark" type="button" data-td-switch="0">Objective Landscape</button>
+            <button class="button is-small is-light" type="button" data-td-switch="1">Prediction Distribution</button>
           </div>
         </div>
       </div>
